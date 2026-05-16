@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arc Bearer — Mint</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #030914;
+      color: #c8e6ff;
+      font-family: 'Courier New', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(1px 1px at 20% 30%, #fff 0%, transparent 100%),
+        radial-gradient(1px 1px at 80% 10%, #fff 0%, transparent 100%),
+        radial-gradient(1px 1px at 50% 60%, #fff 0%, transparent 100%),
+        radial-gradient(1px 1px at 10% 80%, #fff 0%, transparent 100%),
+        radial-gradient(1px 1px at 90% 70%, #fff 0%, transparent 100%),
+        radial-gradient(1px 1px at 35% 15%, #fff 0%, transparent 100%),
+        radial-gradient(1px 1px at 65% 85%, #fff 0%, transparent 100%);
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 480px;
+      padding: 24px;
+    }
+
+    .header { text-align: center; margin-bottom: 32px; }
+
+    .sys-label {
+      font-size: 11px;
+      color: #00f5ff;
+      letter-spacing: 4px;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: 30px;
+      font-weight: bold;
+      color: #fff;
+      letter-spacing: 6px;
+      text-shadow: 0 0 20px #00f5ff88;
+    }
+
+    .sub-label {
+      font-size: 11px;
+      color: #4a7fa5;
+      letter-spacing: 3px;
+      margin-top: 6px;
+    }
+
+    .card {
+      background: rgba(0, 245, 255, 0.03);
+      border: 1px solid rgba(0, 245, 255, 0.15);
+      border-radius: 12px;
+      padding: 28px;
+    }
+
+    .supply-count {
+      color: #00f5ff;
+      font-size: 22px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .supply-bar { margin-bottom: 24px; }
+
+    .supply-text {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #4a7fa5;
+      margin-bottom: 8px;
+      letter-spacing: 2px;
+    }
+
+    .bar-track {
+      height: 4px;
+      background: rgba(0, 245, 255, 0.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #00f5ff, #00ff88);
+      border-radius: 2px;
+      transition: width 0.5s ease;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .info-box {
+      background: rgba(0, 245, 255, 0.05);
+      border: 1px solid rgba(0, 245, 255, 0.1);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .info-label {
+      font-size: 10px;
+      color: #4a7fa5;
+      letter-spacing: 2px;
+      margin-bottom: 4px;
+    }
+
+    .info-value {
+      font-size: 16px;
+      color: #00f5ff;
+      font-weight: bold;
+    }
+
+    .traits {
+      margin-bottom: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .trait {
+      background: rgba(0, 245, 255, 0.05);
+      border: 1px solid rgba(0, 245, 255, 0.1);
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-size: 10px;
+      color: #4a7fa5;
+      letter-spacing: 1px;
+    }
+
+    .trait span { color: #c8e6ff; }
+
+    .status-box {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(0, 245, 255, 0.1);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: #4a7fa5;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+    }
+
+    .status-box.success { color: #00ff88; border-color: rgba(0, 255, 136, 0.3); }
+    .status-box.error   { color: #ff4466; border-color: rgba(255, 68, 102, 0.3); }
+    .status-box.info    { color: #00f5ff; border-color: rgba(0, 245, 255, 0.3); }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 3px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      margin-bottom: 10px;
+    }
+
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    #btn-network {
+      background: transparent;
+      border: 1px solid #4a7fa5;
+      color: #4a7fa5;
+      font-size: 11px;
+      padding: 10px;
+      margin-bottom: 16px;
+    }
+
+    #btn-network:hover:not(:disabled) { border-color: #00f5ff; color: #00f5ff; }
+
+    #btn-connect {
+      background: transparent;
+      border: 1px solid #00f5ff;
+      color: #00f5ff;
+    }
+
+    #btn-connect:hover:not(:disabled) {
+      background: rgba(0, 245, 255, 0.1);
+      box-shadow: 0 0 20px rgba(0, 245, 255, 0.2);
+    }
+
+    #btn-approve {
+      background: rgba(0, 245, 255, 0.1);
+      border: 1px solid #00f5ff;
+      color: #00f5ff;
+    }
+
+    #btn-approve:hover:not(:disabled) {
+      background: rgba(0, 245, 255, 0.2);
+      box-shadow: 0 0 20px rgba(0, 245, 255, 0.3);
+    }
+
+    #btn-mint {
+      background: linear-gradient(135deg, #00f5ff22, #00ff8822);
+      border: 1px solid #00ff88;
+      color: #00ff88;
+    }
+
+    #btn-mint:hover:not(:disabled) {
+      background: linear-gradient(135deg, #00f5ff33, #00ff8833);
+      box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+    }
+
+    .wallet-info {
+      font-size: 11px;
+      color: #4a7fa5;
+      text-align: center;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .tx-link {
+      display: block;
+      text-align: center;
+      font-size: 11px;
+      color: #00f5ff;
+      text-decoration: none;
+      margin-top: 8px;
+      letter-spacing: 1px;
+    }
+
+    .tx-link:hover { text-decoration: underline; }
+
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 10px;
+      color: #1a3a5c;
+      letter-spacing: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="sys-label">SYS://ARC_BEARER_MINT</div>
+      <h1>ARC BEARER</h1>
+      <div class="sub-label">ARC TESTNET — 69 ELITE ENTITIES</div>
+    </div>
+
+    <div class="card">
+      <div class="supply-count" id="supply-count">— / 69</div>
+      <div class="supply-bar">
+        <div class="supply-text">
+          <span>BEARERS CLAIMED</span>
+          <span>MAX: 69</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" id="bar-fill" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-box">
+          <div class="info-label">MINT PRICE</div>
+          <div class="info-value">2 USDC</div>
+        </div>
+        <div class="info-box">
+          <div class="info-label">LIMIT</div>
+          <div class="info-value">1 / WALLET</div>
+        </div>
+      </div>
+
+      <div class="traits">
+        <div class="trait">FREQUENCY <span>ALPHA / BETA / GAMMA</span></div>
+        <div class="trait">ORIGIN <span>UNKNOWN</span></div>
+        <div class="trait">NETWORK <span>ARC</span></div>
+        <div class="trait">SIGNAL <span>LOW</span></div>
+      </div>
+
+      <button id="btn-network" onclick="addNetwork()">+ ADD ARC TESTNET TO WALLET</button>
+
+      <div class="status-box" id="status">CONNECT YOUR WALLET TO BEGIN</div>
+      <div class="wallet-info" id="wallet-info"></div>
+
+      <button id="btn-connect" onclick="connectWallet()">CONNECT WALLET</button>
+      <button id="btn-approve" onclick="approveUSDC()" style="display:none">APPROVE 2 USDC</button>
+      <button id="btn-mint" onclick="mintNFT()" style="display:none">CLAIM YOUR ARC BEARER</button>
+
+      <a class="tx-link" id="tx-link" href="#" target="_blank" style="display:none"></a>
+    </div>
+
+    <div class="footer">ARC BEARER COLLECTION &nbsp;|&nbsp; 69 ENTITIES &nbsp;|&nbsp; SIGNAL: LOW</div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+  <script>
+    // ── UPDATE THIS after deploying ArcBearer.sol in Remix ──
+    const CONTRACT_ADDRESS = "0x78d035C324b668B1c613eAb682Bf78535e11d7b9";
+    const USDC_ADDRESS     = "0x3600000000000000000000000000000000000000";
+    const MINT_PRICE       = 2_000_000n;
+    const ARC_CHAIN_ID_HEX = "0x4CE752"; // 5042002
+    const ARC_CHAIN_ID_ALT = "0x4CE55A"; // 5039962 - ChainList version
+    const EXPLORER         = "https://explorer.testnet.arc.network";
+
+    const CONTRACT_ABI = [
+      "function mint() external",
+      "function totalMinted() external view returns (uint256)",
+      "function remaining() external view returns (uint256)",
+      "function hasMinted(address) external view returns (bool)",
+    ];
+
+    const USDC_ABI = [
+      "function approve(address spender, uint256 amount) external returns (bool)",
+      "function allowance(address owner, address spender) external view returns (uint256)",
+    ];
+
+    let provider, signer, contract, usdcContract, eth;
+
+    function getProvider() {
+      return window.okxwallet || window.ethereum || window.rabby;
+    }
+
+    async function addNetwork() {
+      eth = getProvider();
+      if (!eth) return setStatus("No wallet found. Install OKX, MetaMask or Rabby.", "error");
+      try {
+        await eth.request({
+          method: "wallet_addEthereumChain",
+          params: [{
+            chainId: ARC_CHAIN_ID_HEX,
+            chainName: "Arc Testnet",
+            nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 },
+            rpcUrls: ["https://rpc.testnet.arc.network"],
+            blockExplorerUrls: [EXPLORER],
+          }],
+        });
+        setStatus("Arc Testnet added! Now connect your wallet.", "success");
+      } catch (e) {
+        setStatus("Network already added or request rejected.", "info");
+      }
+    }
+
+    async function connectWallet() {
+      eth = getProvider();
+      if (!eth) return setStatus("No wallet found. Install OKX, MetaMask or Rabby.", "error");
+      try {
+        setStatus("Connecting wallet...", "info");
+        await eth.request({ method: "eth_requestAccounts" });
+
+        provider = new ethers.BrowserProvider(eth, "any");
+        signer = await provider.getSigner();
+
+        const network = await provider.getNetwork();
+        console.log("Chain ID:", network.chainId.toString());
+
+        contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+        usdcContract = new ethers.Contract(USDC_ADDRESS, USDC_ABI, signer);
+
+        const addr = await signer.getAddress();
+        document.getElementById("wallet-info").style.display = "block";
+        document.getElementById("wallet-info").textContent =
+          "BEARER: " + addr.slice(0, 6) + "..." + addr.slice(-4);
+
+        document.getElementById("btn-connect").textContent = "CONNECTED ✓";
+        document.getElementById("btn-connect").disabled = true;
+
+        await refreshSupply();
+        await checkMintState();
+      } catch (e) {
+        setStatus("Connection failed: " + e.message, "error");
+      }
+    }
+
+    async function refreshSupply() {
+      try {
+        const minted = await contract.totalMinted();
+        const count = Number(minted);
+        document.getElementById("supply-count").textContent = `${count} / 69`;
+        document.getElementById("bar-fill").style.width = `${(count / 69) * 100}%`;
+      } catch {}
+    }
+
+    async function checkMintState() {
+      try {
+        const addr = await signer.getAddress();
+        const minted = await contract.hasMinted(addr);
+        const remaining = await contract.remaining();
+
+        if (Number(remaining) === 0) {
+          setStatus("SOLD OUT — All 69 Arc Bearers have been claimed.", "error");
+          return;
+        }
+        if (minted) {
+          setStatus("You have already claimed your Arc Bearer.", "info");
+          return;
+        }
+
+        const allowance = await usdcContract.allowance(addr, CONTRACT_ADDRESS);
+        if (allowance >= MINT_PRICE) {
+          setStatus("USDC approved. Ready to claim your Bearer!", "info");
+          document.getElementById("btn-mint").style.display = "block";
+        } else {
+          setStatus("Approve 2 USDC to claim your Arc Bearer.", "info");
+          document.getElementById("btn-approve").style.display = "block";
+        }
+      } catch (e) {
+        setStatus("Error: Make sure your wallet is on Arc Testnet. " + e.message, "error");
+      }
+    }
+
+    async function approveUSDC() {
+      try {
+        setStatus("Approving 2 USDC — confirm in your wallet...", "info");
+        document.getElementById("btn-approve").disabled = true;
+        const tx = await usdcContract.approve(CONTRACT_ADDRESS, MINT_PRICE);
+        setStatus("Waiting for approval...", "info");
+        await tx.wait();
+        setStatus("USDC approved! Ready to claim.", "success");
+        document.getElementById("btn-approve").style.display = "none";
+        document.getElementById("btn-mint").style.display = "block";
+      } catch (e) {
+        setStatus("Approval failed: " + e.message, "error");
+        document.getElementById("btn-approve").disabled = false;
+      }
+    }
+
+    async function mintNFT() {
+      try {
+        setStatus("Claiming Arc Bearer — confirm in your wallet...", "info");
+        document.getElementById("btn-mint").disabled = true;
+        const tx = await contract.mint();
+        setStatus("Confirming on Arc network...", "info");
+        const receipt = await tx.wait();
+        setStatus("🎉 Arc Bearer claimed successfully!", "success");
+        const link = document.getElementById("tx-link");
+        link.href = `${EXPLORER}/tx/${receipt.hash}`;
+        link.textContent = "VIEW ON ARC EXPLORER →";
+        link.style.display = "block";
+        await refreshSupply();
+      } catch (e) {
+        setStatus("Mint failed: " + e.message, "error");
+        document.getElementById("btn-mint").disabled = false;
+      }
+    }
+
+    function setStatus(msg, type = "") {
+      const el = document.getElementById("status");
+      el.textContent = msg;
+      el.className = "status-box" + (type ? " " + type : "");
+    }
+  </script>
+</body>
+</html>
